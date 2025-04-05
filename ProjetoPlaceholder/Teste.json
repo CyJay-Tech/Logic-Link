@@ -1,0 +1,109 @@
+{
+    "Type": "VisualLogicBlocks",
+    "Name": "Teste",
+    "blocks": [
+        {
+            "Type": "Function",
+            "Name": "Entrada",
+            "id": 1,
+            "Position": {
+                "X": 50,
+                "Y": 50
+            },
+            "Size": {
+                "Width": 120,
+                "Height": 80
+            },
+            "Properties": {
+                "Text": "Dados de entrada",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "Name": "Saída",
+                        "Type": "String",
+                        "DefaultValue": ""
+                    }
+                ]
+            },
+            "connections": [
+                {
+                    "From": {
+                        "Block.id": 1,
+                        "Output": "Saída"
+                    },
+                    "To": {
+                        "Block.id": 2,
+                        "Input": "Entrada"
+                    }
+                }
+            ]
+        },
+        {
+            "Type": "Function",
+            "Name": "Processamento",
+            "id": 2,
+            "Position": {
+                "X": 250,
+                "Y": 100
+            },
+            "Size": {
+                "Width": 150,
+                "Height": 100
+            },
+            "Properties": {
+                "Text": "Processa os dados",
+                "inputs": [
+                    {
+                        "Name": "Entrada",
+                        "Type": "String",
+                        "DefaultValue": ""
+                    }
+                ],
+                "outputs": [
+                    {
+                        "Name": "Resultado",
+                        "Type": "String",
+                        "DefaultValue": ""
+                    }
+                ]
+            },
+            "connections": [
+                {
+                    "From": {
+                        "Block.id": 2,
+                        "Output": "Resultado"
+                    },
+                    "To": {
+                        "Block.id": 3,
+                        "Input": "Entrada"
+                    }
+                }
+            ]
+        },
+        {
+            "Type": "Function",
+            "Name": "Saída",
+            "id": 3,
+            "Position": {
+                "X": 500,
+                "Y": 150
+            },
+            "Size": {
+                "Width": 120,
+                "Height": 80
+            },
+            "Properties": {
+                "Text": "Exibe o resultado final",
+                "inputs": [
+                    {
+                        "Name": "Entrada",
+                        "Type": "String",
+                        "DefaultValue": ""
+                    }
+                ],
+                "outputs": []
+            },
+            "connections": []
+        }
+    ]
+}
