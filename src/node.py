@@ -72,7 +72,10 @@ class NodeItem(QGraphicsItem):
         if self.description:
             painter.setPen(Qt.darkGray)
             painter.setFont(QFont("Arial", 8))
-            painter.drawText(10, self.HEIGHT - 10, self.description)
+            desc_rect = QRectF(10, self.HEIGHT - 25, self.WIDTH - 20, 18)
+            metrics = painter.fontMetrics()
+            elided_desc = metrics.elidedText(self.description, Qt.ElideRight, int(desc_rect.width()))
+            painter.drawText(desc_rect, Qt.AlignLeft | Qt.AlignVCenter, elided_desc)
     def add_output_connection(self, conn):
         self.output_connections.append(conn)
 
