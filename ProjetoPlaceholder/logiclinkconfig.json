@@ -1,9 +1,0 @@
-{
-    "name": "Nome do Projeto",
-    "description": "Descrição do Projeto",
-    "author": "Seu Nome",
-    "version": "1.0.0",
-    "license": "MIT",
-    "archives": ["Teste.json", "aqui ficam todos os arquivos do projeto, apenas os arquivos listados aqui vão aparecer no explorer no app logic link"
-    ]
-}
