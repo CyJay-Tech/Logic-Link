@@ -198,12 +198,21 @@ class MainWindow(QMainWindow):
 
         self.prop_widget.setLayout(prop_layout)
 
-        # Adicionar barra de rolagem ao painel de propriedades
+        # QLabel para mensagem padrão quando nenhum node está selecionado
+        self.no_selection_label = QLabel("Nenhum node selecionado")
+        self.no_selection_label.setAlignment(Qt.AlignCenter)
+        self.no_selection_label.setStyleSheet("font-size: 16px; color: gray;")
+
+        # Widget de stack para alternar entre painel e mensagem
+        from PyQt5.QtWidgets import QStackedWidget, QSizePolicy
+        self.panel_stack = QStackedWidget()
+        self.panel_stack.addWidget(self.prop_widget)         # index 0: painel de edição
+        self.panel_stack.addWidget(self.no_selection_label)  # index 1: mensagem padrão
+
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.prop_widget)
+        self.scroll_area.setWidget(self.panel_stack)
         self.dock.setWidget(self.scroll_area)
-        from PyQt5.QtWidgets import QSizePolicy
         self.prop_widget.setMinimumWidth(250)
         self.prop_widget.setMaximumWidth(350)
         self.prop_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -214,7 +223,7 @@ class MainWindow(QMainWindow):
         self.dock.setMaximumWidth(370)
         self.dock.setWidget(self.scroll_area)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
-        self.dock.hide()
+        self.dock.show()
         self.scene.selectionChanged.connect(self.on_selection_changed)
         self.inputs_list.itemChanged.connect(self.input_name_changed)
         self.outputs_list.itemChanged.connect(self.output_name_changed)
@@ -247,14 +256,24 @@ class MainWindow(QMainWindow):
             self.selected_node.update()
 
     def on_selection_changed(self):
-        items = self.scene.selectedItems()
+        # Protege contra acesso à cena destruída
+        try:
+            if not hasattr(self, "scene") or self.scene is None:
+                return
+            items = self.scene.selectedItems()
+        except RuntimeError:
+            # Cena já foi destruída
+            return
+
         if items and isinstance(items[0], NodeItem):
             self.selected_node = items[0]
             self.fill_properties_panel(self.selected_node)
-            self.dock.show()
+            self.panel_stack.setCurrentIndex(0)  # Mostra painel de edição
         else:
             self.selected_node = None
-            self.dock.hide()
+            self.panel_stack.setCurrentIndex(1)  # Mostra mensagem padrão
+        # Garante que o painel nunca seja ocultado
+        self.dock.show()
 
     def fill_properties_panel(self, node):
         self.title_edit.blockSignals(True)
