@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QVBoxLayout, QWidget, QMenu,
-    QDockWidget, QLineEdit, QTextEdit, QListWidget, QPushButton, QLabel, QHBoxLayout
+    QDockWidget, QLineEdit, QTextEdit, QListWidget, QListWidgetItem, QPushButton, QLabel, QHBoxLayout, QScrollArea
 )
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QWheelEvent, QPainter
@@ -163,24 +163,56 @@ class MainWindow(QMainWindow):
         self.outputs_add_btn = QPushButton("Adicionar Saída")
         self.outputs_del_btn = QPushButton("Remover Saída")
 
+        # Novos widgets para propriedades e métodos
+        self.properties_list = QListWidget()
+        self.properties_list.setEditTriggers(QListWidget.DoubleClicked | QListWidget.SelectedClicked | QListWidget.EditKeyPressed)
+        self.properties_add_btn = QPushButton("Adicionar Propriedade")
+        self.properties_del_btn = QPushButton("Remover Propriedade")
+
+        self.methods_list = QListWidget()
+        self.methods_list.setEditTriggers(QListWidget.DoubleClicked | QListWidget.SelectedClicked | QListWidget.EditKeyPressed)
+        self.methods_add_btn = QPushButton("Adicionar Método")
+        self.methods_del_btn = QPushButton("Remover Método")
+
         prop_layout = QVBoxLayout(self.prop_widget)
         prop_layout.addWidget(QLabel("Título:"))
         prop_layout.addWidget(self.title_edit)
         prop_layout.addWidget(QLabel("Entradas:"))
         prop_layout.addWidget(self.inputs_list)
+        prop_layout.addWidget(self.inputs_add_btn)
+        prop_layout.addWidget(self.inputs_del_btn)
         prop_layout.addWidget(QLabel("Saídas:"))
         prop_layout.addWidget(self.outputs_list)
         prop_layout.addWidget(self.outputs_add_btn)
         prop_layout.addWidget(self.outputs_del_btn)
+        prop_layout.addWidget(QLabel("Propriedades:"))
+        prop_layout.addWidget(self.properties_list)
+        prop_layout.addWidget(self.properties_add_btn)
+        prop_layout.addWidget(self.properties_del_btn)
+        prop_layout.addWidget(QLabel("Métodos:"))
+        prop_layout.addWidget(self.methods_list)
+        prop_layout.addWidget(self.methods_add_btn)
+        prop_layout.addWidget(self.methods_del_btn)
         prop_layout.addWidget(QLabel("Descrição:"))
         prop_layout.addWidget(self.desc_edit)
-        prop_layout.addWidget(self.inputs_add_btn)
-        prop_layout.addWidget(self.inputs_del_btn)
-        # Detectar seleção de node
+
         self.prop_widget.setLayout(prop_layout)
+
+        # Adicionar barra de rolagem ao painel de propriedades
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setWidget(self.prop_widget)
+        self.dock.setWidget(self.scroll_area)
+        from PyQt5.QtWidgets import QSizePolicy
         self.prop_widget.setMinimumWidth(250)
+        self.prop_widget.setMaximumWidth(350)
+        self.prop_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setMinimumWidth(270)
+        self.scroll_area.setMaximumWidth(370)
         self.dock.setMinimumWidth(270)
-        self.dock.setWidget(self.prop_widget)
+        self.dock.setMaximumWidth(370)
+        self.dock.setWidget(self.scroll_area)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
         self.dock.hide()
         self.scene.selectionChanged.connect(self.on_selection_changed)
@@ -194,6 +226,14 @@ class MainWindow(QMainWindow):
         self.inputs_del_btn.clicked.connect(self.del_input)
         self.outputs_add_btn.clicked.connect(self.add_output)
         self.outputs_del_btn.clicked.connect(self.del_output)
+        # Conectar botões de propriedades e métodos
+        self.properties_add_btn.clicked.connect(self.add_property)
+        self.properties_del_btn.clicked.connect(self.del_property)
+        self.methods_add_btn.clicked.connect(self.add_method)
+        self.methods_del_btn.clicked.connect(self.del_method)
+        # Conectar edição de itens das listas
+        self.properties_list.itemChanged.connect(self.property_name_changed)
+        self.methods_list.itemChanged.connect(self.method_name_changed)
     def input_name_changed(self, item):
         if self.selected_node:
             row = self.inputs_list.row(item)
@@ -230,6 +270,22 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(out)
             item.setFlags(item.flags() | Qt.ItemIsEditable)
             self.outputs_list.addItem(item)
+        # Preencher propriedades
+        self.properties_list.blockSignals(True)
+        self.properties_list.clear()
+        for prop in getattr(node, "properties", []):
+            item = QListWidgetItem(prop)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            self.properties_list.addItem(item)
+        self.properties_list.blockSignals(False)
+        # Preencher métodos
+        self.methods_list.blockSignals(True)
+        self.methods_list.clear()
+        for method in getattr(node, "methods", []):
+            item = QListWidgetItem(method)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            self.methods_list.addItem(item)
+        self.methods_list.blockSignals(False)
     def update_node_title(self, text):
         if self.selected_node:
             self.selected_node.title = text
@@ -276,6 +332,52 @@ class MainWindow(QMainWindow):
         self.title_edit.blockSignals(False)
         self.desc_edit.blockSignals(False)
 
+    def add_property(self):
+        if self.selected_node:
+            new_prop = f"propriedade{len(self.selected_node.properties)+1}"
+            self.selected_node.properties.append(new_prop)
+            item = QListWidgetItem(new_prop)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            self.properties_list.addItem(item)
+            self.selected_node.update()
+
+    def del_property(self):
+        if self.selected_node:
+            row = self.properties_list.currentRow()
+            if row >= 0:
+                self.selected_node.properties.pop(row)
+                self.properties_list.takeItem(row)
+                self.selected_node.update()
+
+    def add_method(self):
+        if self.selected_node:
+            new_method = f"metodo{len(self.selected_node.methods)+1}"
+            self.selected_node.methods.append(new_method)
+            item = QListWidgetItem(new_method)
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            self.methods_list.addItem(item)
+            self.selected_node.update()
+
+    def del_method(self):
+        if self.selected_node:
+            row = self.methods_list.currentRow()
+            if row >= 0:
+                self.selected_node.methods.pop(row)
+                self.methods_list.takeItem(row)
+                self.selected_node.update()
+
+    def property_name_changed(self, item):
+        if self.selected_node:
+            row = self.properties_list.row(item)
+            self.selected_node.properties[row] = item.text()
+            self.selected_node.update()
+
+    def method_name_changed(self, item):
+        if self.selected_node:
+            row = self.methods_list.row(item)
+            self.selected_node.methods[row] = item.text()
+            self.selected_node.update()
+
     def save_project(self):
         import json
         from PyQt5.QtWidgets import QFileDialog
@@ -294,6 +396,8 @@ class MainWindow(QMainWindow):
                 "inputs": node.inputs,
                 "outputs": node.outputs,
                 "description": node.description,
+                "properties": getattr(node, "properties", []),
+                "methods": getattr(node, "methods", []),
                 "pos": [node.pos().x(), node.pos().y()]
             })
         # Serializar conexões
@@ -328,7 +432,9 @@ class MainWindow(QMainWindow):
                     title=node_data.get("title", "Node"),
                     inputs=node_data.get("inputs", []),
                     outputs=node_data.get("outputs", []),
-                    description=node_data.get("description", "")
+                    description=node_data.get("description", ""),
+                    properties=node_data.get("properties", []),
+                    methods=node_data.get("methods", [])
                 )
                 node.setPos(*node_data.get("pos", [0, 0]))
                 self.scene.addItem(node)

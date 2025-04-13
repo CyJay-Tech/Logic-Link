@@ -6,12 +6,14 @@ class NodeItem(QGraphicsItem):
     WIDTH = 180
     HEIGHT = 100
 
-    def __init__(self, title="Node", inputs=None, outputs=None, description=""):
+    def __init__(self, title="Node", inputs=None, outputs=None, description="", properties=None, methods=None):
         super().__init__()
         self.title = title
         self.inputs = inputs if inputs is not None else []
         self.outputs = outputs if outputs is not None else []
         self.description = description
+        self.properties = properties if properties is not None else []
+        self.methods = methods if methods is not None else []
         self.setFlags(
             QGraphicsItem.ItemIsMovable |
             QGraphicsItem.ItemIsSelectable |
